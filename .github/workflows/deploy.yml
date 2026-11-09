@@ -3,16 +3,20 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  # Lets you re-run a deploy from the Actions tab without pushing a commit.
   workflow_dispatch:
 
+# Read the repo; mint an id-token so the Pages deploy can authenticate.
 permissions:
   contents: read
   pages: write
   id-token: write
 
+# Let a running deploy finish rather than cancelling it part-way, but queue
+# at most one more so rapid pushes don't pile up.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -27,14 +31,27 @@ jobs:
           node-version: 22
           cache: npm
 
+      # `npm ci` installs exactly what package-lock.json pins, and fails if the
+      # lockfile is out of sync with package.json.
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
+      # `npm run build` runs `tsc -b` first, so type errors fail the deploy.
+      # The base path is derived from the repository name, so renaming the
+      # repo cannot leave the deployed asset URLs pointing at the old path.
       - name: Type-check and build
         run: npm run build
         env:
-          # Serve the app under /<repo-name>/ on GitHub Pages
           DEPLOY_BASE_PATH: /${{ github.event.repository.name }}/
+
+      # Pages serves 404.html for unknown paths. The app uses hash routing, so
+      # this only matters if someone hits a stray path — it hands them back the
+      # app instead of GitHub's 404 page.
+      - name: Add SPA fallback
+        run: cp dist/index.html dist/404.html
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

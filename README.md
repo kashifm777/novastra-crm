@@ -31,29 +31,32 @@ npm run preview
 
 ## Deploy to GitHub Pages (as a project site)
 
-The included workflow (`.github/workflows/deploy.yml`) builds and deploys on every push to `main`, and derives the base path from the repository name automatically.
+The included workflow (`.github/workflows/deploy.yml`) lints, type-checks,
+builds and deploys on every push to `main`.
 
-1. Create an empty GitHub repository (e.g. `CRM`).
-2. Add its **Settings → Pages → Source: GitHub Actions**.
+1. Create an empty GitHub repository named `novastra-crm`.
+2. Set **Settings → Pages → Source** to **GitHub Actions**.
 3. Push:
 
 ```bash
-git init -b main
-git add .
-git commit -m "Novastra CRM"
-git remote add origin git@github.com:kashifm777/CRM.git
+git remote add origin git@github.com:kashifm777/novastra-crm.git
 git push -u origin main
 ```
 
-The app goes live at `https://kashifm777.github.io/CRM`. Pages builds fail-closed: also verify the *first* Actions run has permission to create the Pages environment if prompted.
+The app goes live at `https://kashifm777.github.io/novastra-crm/`.
 
-To re-base manually from a terminal, pass the path:
+### Base path
+
+GitHub Pages serves a project site from `/<repo-name>/`, so the build needs a
+matching `base` or the emitted `/assets/...` URLs 404 and the page renders
+blank. The workflow derives it from the repository name, so renaming the repo
+keeps working without edits. Local builds and `npm run dev` default to `/`.
+
+To reproduce the deployed build locally:
 
 ```bash
-DEPLOY_PATH_NAME=CRM npm run build:pages   # emits dist/ for /CRM/
+DEPLOY_BASE_PATH=/novastra-crm/ npm run build && npm run preview
 ```
-
-To deploy instead as a sub-folder of your user site (`kashifm777.github.io` repo), copy the contents of `dist/` into e.g. a `crm/` folder there and commit — the hash-based router needs no extra configuration.
 
 ## Project layout
 
